@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "mpi.h"
+#include <sys/time.h>
 
 #define SERVER 0
 
@@ -9,23 +10,33 @@ void assign_tasks();
 
 int rank, nprocs;
 int left, right;
-
+long long start_ts;
+long long stop_ts;
+float elapsed_time;
+struct timeval ts;
 
 int main(int argc, char *argv[])
 {
-	int left, right;	  
-	
+	int left, right;
 	
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);	
 
-
-	printf("Procesos %d\n",nprocs);
 	assign_tasks();
 	find_friend_numbers();
 
 	MPI_Finalize();
+
+
+	if (rank == SERVER) {
+		gettimeofday(&ts, NULL);
+		stop_ts = ts.tv_sec * 1000000 + ts.tv_usec; // Tiempo final
+
+		elapsed_time = (float) (stop_ts - start_ts)/1000000.0;
+
+		printf("Tiempo %1.2f segundos\n",elapsed_time);
+	}
 
 	return 0;
 }
@@ -34,21 +45,23 @@ void assign_tasks()
 {
 	int msg[2];	
 
+
 	if(rank == SERVER)
 	{
 		printf("Ingresa el rango en el que deseas buscar\n");
 		scanf("%d %d", &left, &right);
+		gettimeofday(&ts, NULL);
+		start_ts = ts.tv_sec * 1000000 + ts.tv_usec; // Tiempo inicial
 		msg[0] = left;
 		msg[1] = right;
 
 		for(int i = 0; i < nprocs; i++)
 			if(i != rank)
-				MPI_Send(msg, 2, MPI_INT, rank, 0, MPI_COMM_WORLD);	
+				MPI_Send(msg, 2, MPI_INT, i, 0, MPI_COMM_WORLD);	
 	}
 
 	else
 	{
-		printf("CHALE\n");
 		MPI_Recv(msg, 2, MPI_INT, SERVER, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		left = msg[0] + rank;
 		right = msg[1];
@@ -59,8 +72,6 @@ void assign_tasks()
 
 int find_friend_numbers()
 {
-	printf("Buscando desde el proceso %d\n", rank);
-	printf("Desde %d hasta %d\n", left, right);
 	for(int i = left; i <= right; i+=nprocs)
 	{
 		int a = divisors_sum(i);
