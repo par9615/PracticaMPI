@@ -23,8 +23,12 @@ int main(int argc, char *argv[])
 	MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);	
 
+	MPI_Barrier(MPI_COMM_WORLD);
+
 	assign_tasks();
 	find_friend_numbers();
+
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	MPI_Finalize();
 
@@ -72,6 +76,7 @@ void assign_tasks()
 
 int find_friend_numbers()
 {
+	printf("%d está en ejecución\n", rank);
 	for(int i = left; i <= right; i+=nprocs)
 	{
 		int a = divisors_sum(i);

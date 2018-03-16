@@ -1,7 +1,6 @@
-all: amigos
 
-amigos: amigos.c amigos.o
-	mpicc -o amigos amigos.c amigos.o
+amigos: amigos.c 
+	mpicc -o amigos amigos.c 
 
-clean: rm amigos
-	rm *.o
+clean: 
+	rm amigos
